@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="jquery-1.9.1.min.js"></script>
+<script>
+$(function(){
+var canvas = document.getElementById("main-viewport"),
+	ctx = canvas.getContext('2d');
+ctx.translate(canvas.width/2, canvas.height/2);
+
+function point(x, y, z){ return [x, y, z] }
+
+function Surface(){
+	this.points = [];
+}
+
+Surface.prototype = {
+
+	equation : function(x, y){
+		var d = Math.sqrt(x*x + y*y);
+		return 4*(Math.sin(d) / d);
+	},
+	generate : function(){
+		var i = 0;
+		for(var x = -9; x <= 9; x += 0.2){
+			for(var y = -9; y <= 9; y += 0.2){
+				this.points[i] = point(x, y, this.equation(x, y));
+				++i;
+			}
+		}
+	},
+	draw : function(){
+		for(var num = 0; num < this.points.length; num++){
+			//console.log(this.points[num][1]);
+			ctx.fillRect(this.points[num][0] * 24, this.points[num][1] * 24, 2, 2);
+		}
+	},
+	multi : function(R){
+		var Px = Py = Pz = 0,
+			P = this.points,
+			sum;
+		for(var V = 0; V < P.length; V++){
+			Px = P[V][0], Py = P[V][1], Pz = P[V][2];
+			for(var Rrow = 0; Rrow < 3; Rrow++){
+				sum = (R[Rrow][0] * Px) + (R[Rrow][1] * Py) + (R[Rrow][2] * Pz);
+				P[V][Rrow] = sum;
+			}
+		}
+	},
+	rotateX : function(sign){
+		var Rx = [ [ 0, 0, 0],
+					[0, 0, 0],
+					[0, 0, 0] ];
+		Rx[0][0] = 1;
+		Rx[0][1] = 0;
+		Rx[0][2] = 0;
+		Rx[1][0] = 0;
+		Rx[1][1] = Math.cos(sign*0.05);
+		Rx[1][2] = -Math.sin(sign*0.05);
+		Rx[2][0] = 0;
+		Rx[2][1] = Math.sin(sign*0.05);
+		Rx[2][2] = Math.cos(sign*0.05);
+		this.multi(Rx);
+		this.draw();
+	}
+}
+surf = new Surface();
+surf.generate();
+surf.draw();
+
+$(document.documentElement).keydown(function(event){
+	if(event.keyCode == 38){
+		surf.rotateX(1);
+		event.preventDefault();
+	} else if(event.keyCode == 40){
+		surf.rotateX(-1);
+		event.preventDefault();
+	}
+});
+});
+</script>
+</head>
+<body>
+<canvas id="main-viewport" width="600" height="600"></canvas>
+</body>
+</html>
