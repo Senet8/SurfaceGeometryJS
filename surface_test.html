@@ -1,25 +1,36 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<!---------- Taken from IE Dev Center 'How to Create 3D Graphics Using Canvas' tutorial ------->
+<!---------- http://msdn.microsoft.com/en-us/library/ie/hh535759(v=vs.85).aspx ---------------->
 <script src="jquery-1.9.1.min.js"></script>
+<script src="requestAnimFrame.js"></script>
 <script>
 $(function(){
+// setup canvas contex
 var canvas = document.getElementById("main-viewport"),
 	ctx = canvas.getContext('2d');
 ctx.translate(canvas.width/2, canvas.height/2);
 
+// takes a (x, y, z) point and returns the 3 x 1 vector form of the point
 function point(x, y, z){ return [x, y, z] }
 
+// Surface Constructor function
 function Surface(){
 	this.points = [];
 }
 
 Surface.prototype = {
-
+	/*
+    Given the point (x, y), returns the associated z-coordinate based on the provided surface equation, of the form z = f(x, y).
+    */
 	equation : function(x, y){
 		var d = Math.sqrt(x*x + y*y);
 		return 4*(Math.sin(d) / d);
-	},
+	},	
+	/*
+    Creates a list of (x, y, z) points (in 3 x 1 vector format) representing the surface.
+    */
 	generate : function(){
 		var i = 0;
 		for(var x = -9; x <= 9; x += 0.2){
@@ -31,10 +42,12 @@ Surface.prototype = {
 	},
 	draw : function(){
 		for(var num = 0; num < this.points.length; num++){
-			//console.log(this.points[num][1]);
 			ctx.fillRect(this.points[num][0] * 24, this.points[num][1] * 24, 2, 2);
 		}
 	},
+	/*
+    Assumes that R is a 3 x 3 matrix and that this.points (i.e., P) is a 3 x n matrix. This method performs P = R * P.
+    */
 	multi : function(R){
 		var Px = Py = Pz = 0,
 			P = this.points,
@@ -48,9 +61,13 @@ Surface.prototype = {
 		}
 	},
 	rotateX : function(sign){
+		// initialize a 3x3 matrix
 		var Rx = [ [ 0, 0, 0],
 					[0, 0, 0],
 					[0, 0, 0] ];
+					
+		// the following is simply for clarity
+		
 		Rx[0][0] = 1;
 		Rx[0][1] = 0;
 		Rx[0][2] = 0;
@@ -60,14 +77,26 @@ Surface.prototype = {
 		Rx[2][0] = 0;
 		Rx[2][1] = Math.sin(sign*0.05);
 		Rx[2][2] = Math.cos(sign*0.05);
+		
 		this.multi(Rx);
+		ctx.clearRect(-canvas.width/2, -canvas.height/2, canvas.width, canvas.height);
 		this.draw();
+		console.log(sign);
 	}
 }
-surf = new Surface();
-surf.generate();
-surf.draw();
+function animate(){
+	surf.rotateX(1);
+	window.requestNextAnimationFrame(animate);
+}
 
+// Initiate Surface
+function initSurface(){
+	surf = new Surface();
+	surf.generate();
+	surf.draw();
+}
+
+//Up/Down arrow keys code
 $(document.documentElement).keydown(function(event){
 	if(event.keyCode == 38){
 		surf.rotateX(1);
@@ -77,6 +106,9 @@ $(document.documentElement).keydown(function(event){
 		event.preventDefault();
 	}
 });
+
+initSurface();
+window.requestNextAnimationFrame(animate);
 });
 </script>
 </head>
